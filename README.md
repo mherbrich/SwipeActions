@@ -521,12 +521,15 @@ Actually if you don't use `.contentShape(Rectangle())`, you can also add `.conte
 
 Use modifier `.swipeHint`:
 
+The place for applying this modifier depends on type of menu.
+
+Add `.swipeHint` strictly after `.addSwipeAction` for `.slided` type of menu 👇🏻
 ```swift
 ForEach(range, ...) {
     YourCell()
         ...
         .addFullSwipeAction(
-            menu: .slided,
+            menu: .slided, // <== LOOK HERE
             swipeColor: .red,
             state: $state) {
                 Leading {
@@ -538,6 +541,28 @@ ForEach(range, ...) {
             }
         .swipeHint(cell == range.first, hintOffset: 120.0) // for trailing <== LOOK HERE
         .swipeHint(cell == range[1] , hintOffset: -120.0) // for leading <== LOOK HERE
+    ...
+}
+```
+
+Add `.swipeHint` strictly before `.addSwipeAction` for `.swiped` type of menu 👇🏻
+```swift
+ForEach(range, ...) {
+    YourCell()
+        ...
+        .swipeHint(cell == range.first, hintOffset: 120.0) // for trailing <== LOOK HERE
+        .swipeHint(cell == range[1], hintOffset: -120.0) // for leading <== LOOK HERE
+        .addFullSwipeAction(
+            menu: .swiped, // <== LOOK HERE
+            swipeColor: .red,
+            state: $state) {
+                Leading {
+                    ...
+                }
+                Trailing {
+                    ...
+                }
+            }
     ...
 }
 ```
