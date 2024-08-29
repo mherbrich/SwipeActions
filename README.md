@@ -569,6 +569,35 @@ ForEach(range, ...) {
 
 </details>
 
+### Supporting Right to left
+
+This Library supports right-to-left languages like Arabic and Hebrew. 
+
+Check it by adding `.environment(\.layoutDirection, .rightToLeft)` to your view with swipe actions.
+
+<details>
+<summary>Look for the example</summary>
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        LazyVStack {
+            ForEach(0..<5) { index in
+                Text("Item \(index)")
+                    .swipeActions {
+                        Button("Delete") {
+                            print("Item deleted")
+                        }
+                        .tint(.red)
+                    }
+            }
+        }
+        .environment(\.layoutDirection, .rightToLeft) // <= Look here
+    }
+}
+```
+
+</details>
 
 ## Communication
 
