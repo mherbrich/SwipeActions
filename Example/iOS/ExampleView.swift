@@ -125,7 +125,7 @@ struct ExampleView: View {
                         }
                     }
                 }
-                // .environment(\.layoutDirection, .rightToLeft) check for TRL languages
+                //.environment(\.layoutDirection, .rightToLeft) //check for TRL languages
                 .alert(isPresented: $fullSwiped) {
                     Alert(title: Text(selectedAction),
                           dismissButton: .default(Text("Archived!")) {
@@ -451,11 +451,11 @@ struct ExampleView: View {
                         .frame(width: UIScreen.main.bounds.size.width - 32, height: 80)
                         .contentShape(Rectangle())
                         .background(Color(UIColor.systemBackground))
-                        .onTapGesture {
-                        }
-                        .addSwipeAction(menu: .swiped,
-                                        state: $state) {
-                            
+                        .onTapGesture {}
+                        .addSwipeAction(
+                            menu: .swiped,
+                            state: $state
+                        ) {
                             Leading {
                                 Button {
                                 } label: {
