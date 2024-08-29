@@ -83,10 +83,12 @@ struct ExampleView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color(UIColor.systemBackground))
-                                .addFullSwipeAction(menu: .slided,
-                                                    swipeColor: .green,
-                                                    swipeRole: .defaults,
-                                                    state: $state) {
+                                .addFullSwipeAction(
+                                    menu: .slided,
+                                    swipeColor: .green,
+                                    swipeRole: .`default`,
+                                    state: $state
+                                ) {
                                     Leading {
                                         Button {
                                         } label: {
@@ -123,6 +125,7 @@ struct ExampleView: View {
                         }
                     }
                 }
+                //.environment(\.layoutDirection, .rightToLeft) //check for TRL languages
                 .alert(isPresented: $fullSwiped) {
                     Alert(title: Text(selectedAction),
                           dismissButton: .default(Text("Archived!")) {
@@ -156,9 +159,11 @@ struct ExampleView: View {
                             .contentShape(Rectangle())
                             .padding()
                             .background(Color(UIColor.systemBackground))
-                            .addFullSwipeAction(menu: .slided,
-                                                swipeColor: .red,
-                                                state: $state) {
+                            .addFullSwipeAction(
+                                menu: .slided,
+                                swipeColor: .red,
+                                state: $state
+                            ) {
                                 Leading {
                                     Button {
                                         selectedAction = "cell \(cell) checked!"
@@ -237,10 +242,12 @@ struct ExampleView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color(UIColor.systemBackground))
-                            .addFullSwipeAction(menu: .slided,
-                                                swipeColor: .green,
-                                                swipeRole: .defaults,
-                                                state: $state) {
+                            .addFullSwipeAction(
+                                menu: .slided,
+                                swipeColor: .green,
+                                swipeRole: .default,
+                                state: $state
+                            ) {
                                 Leading {
                                     Button {
                                     } label: {
@@ -272,12 +279,14 @@ struct ExampleView: View {
                     }
                 }
                 .alert(isPresented: $fullSwiped) {
-                    Alert(title: Text(selectedAction),
-                          dismissButton: .default(Text("Archived!")) {
-                        withAnimation {
-                            state = .swiped(UUID())
+                    Alert(
+                        title: Text(selectedAction),
+                        dismissButton: .default(Text("Archived!")) {
+                            withAnimation {
+                                state = .swiped(UUID())
+                            }
                         }
-                    })
+                    )
                 }
             }
         }
@@ -310,8 +319,10 @@ struct ExampleView: View {
                             )
                             .contentShape(Rectangle())
                             .listStyle(.plain)
-                            .addSwipeAction(menu: .swiped,
-                                            state: $state) {
+                            .addSwipeAction(
+                                menu: .swiped,
+                                state: $state
+                            ) {
                                 Leading {
                                     Button {
                                         print("check \(cell)")
@@ -440,11 +451,11 @@ struct ExampleView: View {
                         .frame(width: UIScreen.main.bounds.size.width - 32, height: 80)
                         .contentShape(Rectangle())
                         .background(Color(UIColor.systemBackground))
-                        .onTapGesture {
-                        }
-                        .addSwipeAction(menu: .swiped,
-                                        state: $state) {
-                            
+                        .onTapGesture {}
+                        .addSwipeAction(
+                            menu: .swiped,
+                            state: $state
+                        ) {
                             Leading {
                                 Button {
                                 } label: {
@@ -465,9 +476,8 @@ struct ExampleView: View {
                                 .contentShape(Rectangle())
                                 .background(Color.green)
                             }
-                        }
-                                        .listRowInsets(EdgeInsets())
-                                        .hideSeparators()
+                        }.listRowInsets(EdgeInsets())
+                        .hideSeparators()
                 }
                 .padding(16)
                 .listStyle(.plain)
@@ -482,10 +492,11 @@ struct ExampleView: View {
                         .padding(.horizontal, 16)
                         .frame(width: UIScreen.main.bounds.size.width - 32, height: 80)
                         .background(Color(UIColor.systemBackground))
-                        .onTapGesture {
-                        }
-                        .addSwipeAction(edge: .trailing,
-                                        state: $state) {
+                        .onTapGesture {}
+                        .addSwipeAction(
+                            edge: .trailing,
+                            state: $state
+                        ) {
                             Button {
                                 print("remove")
                             } label: {
@@ -495,9 +506,8 @@ struct ExampleView: View {
                             .frame(width: 60, height: 80, alignment: .center)
                             .contentShape(Rectangle())
                             .background(Color.red)
-                        }
-                                        .listRowInsets(EdgeInsets())
-                                        .hideSeparators()
+                        }.listRowInsets(EdgeInsets())
+                        .hideSeparators()
                     
                 }
                 .padding(16)
@@ -577,9 +587,11 @@ struct ExampleView: View {
                             .contentShape(Rectangle())
                             .padding()
                             .background(Color(UIColor.systemBackground))
-                            .addFullSwipeAction(menu: .slided,
-                                                swipeColor: .red,
-                                                state: $state) {
+                            .addFullSwipeAction(
+                                menu: .slided,
+                                swipeColor: .red,
+                                state: $state
+                            ) {
                                 Leading {
                                     Button {
                                         selectedAction = "cell \(cell) checked!"

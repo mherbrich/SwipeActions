@@ -2,7 +2,12 @@ import SwiftUI
 
 public extension View {
     @ViewBuilder
-    func swipeHint(_ isActive: Bool = false, hintOffset: CGFloat, delayIn: CGFloat = 0.5, delayOut: CGFloat = 1.5) -> some View {
+    func swipeHint(
+        _ isActive: Bool = false,
+        hintOffset: CGFloat,
+        delayIn: CGFloat = 0.5,
+        delayOut: CGFloat = 1.5
+    ) -> some View {
         if isActive {
             modifier(
                 SwipeHintModifier(
@@ -27,12 +32,12 @@ public struct SwipeHintModifier: ViewModifier {
         content
             .offset(x: -offset)
             .onAppear {
-                    withAnimation(.easeInOut.delay(delayIn)) {
-                        offset = hintOffset
-                    }
-                    withAnimation(.easeInOut.delay(delayOut)) {
-                        offset = 0
-                    }
+                withAnimation(.easeInOut.delay(delayIn)) {
+                    offset = hintOffset
+                }
+                withAnimation(.easeInOut.delay(delayOut)) {
+                    offset = 0
+                }
             }
     }
 }
