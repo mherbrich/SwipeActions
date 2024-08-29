@@ -83,10 +83,12 @@ struct ExampleView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color(UIColor.systemBackground))
-                                .addFullSwipeAction(menu: .slided,
-                                                    swipeColor: .green,
-                                                    swipeRole: .defaults,
-                                                    state: $state) {
+                                .addFullSwipeAction(
+                                    menu: .slided,
+                                    swipeColor: .green,
+                                    swipeRole: .`default`,
+                                    state: $state
+                                ) {
                                     Leading {
                                         Button {
                                         } label: {
@@ -119,10 +121,12 @@ struct ExampleView: View {
                                     cell == range.first,
                                     hintOffset: 60
                                 )
+                                
                                 .listRowInsets(EdgeInsets())
                         }
                     }
                 }
+                // .environment(\.layoutDirection, .rightToLeft) check for TRL languages
                 .alert(isPresented: $fullSwiped) {
                     Alert(title: Text(selectedAction),
                           dismissButton: .default(Text("Archived!")) {
@@ -237,10 +241,12 @@ struct ExampleView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color(UIColor.systemBackground))
-                            .addFullSwipeAction(menu: .slided,
-                                                swipeColor: .green,
-                                                swipeRole: .defaults,
-                                                state: $state) {
+                            .addFullSwipeAction(
+                                menu: .slided,
+                                swipeColor: .green,
+                                swipeRole: .default,
+                                state: $state
+                            ) {
                                 Leading {
                                     Button {
                                     } label: {

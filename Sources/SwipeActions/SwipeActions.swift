@@ -12,7 +12,7 @@ public enum MenuType {
 public enum SwipeRole {
     case destructive /// for removing element
     case cancel
-    case defaults
+    case `default`
 }
 
 /// For opened cells auto-hiding during swiping anothers
@@ -27,8 +27,10 @@ private enum VisibleButton: Equatable {
     case right(UUID)
 }
 
-struct SwipeAction<V1: View, V2: View>: ViewModifier {
+public struct SwipeAction<V1: View, V2: View>: ViewModifier {
 
+    @Environment(\.layoutDirection) var layoutDirection
+    
     @Binding private var state: SwipeState
     @State private var offset: CGFloat = 0
     @State private var oldOffset: CGFloat = 0
@@ -64,7 +66,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
     init(
         menu: MenuType,
         allowsFullSwipe: Bool = false,
-        fullSwipeRole: SwipeRole = .defaults,
+        fullSwipeRole: SwipeRole = .default,
         swipeColor: Color? = nil,
         state: Binding<SwipeState>,
         @ViewBuilder _ content: @escaping () -> TupleView<(Leading<V1>, Trailing<V2>)>,
@@ -83,7 +85,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
     init(
         menu: MenuType,
         allowsFullSwipe: Bool = false,
-        fullSwipeRole: SwipeRole = .defaults,
+        fullSwipeRole: SwipeRole = .default,
         swipeColor: Color? = nil,
         state: Binding<SwipeState>,
         @ViewBuilder leading: @escaping () -> V1,
@@ -102,7 +104,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
     init(
         menu: MenuType,
         allowsFullSwipe: Bool = false,
-        fullSwipeRole: SwipeRole = .defaults,
+        fullSwipeRole: SwipeRole = .default,
         swipeColor: Color? = nil,
         state: Binding<SwipeState>,
         @ViewBuilder trailing: @escaping () -> V2,
@@ -118,13 +120,13 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
         self.action = action
     }
     
-    func reset() {
+    private func reset() {
         visibleButton = .none
         offset = 0
         oldOffset = 0
     }
     
-    var leadingView: some View {
+    private var leadingView: some View {
         leadingSwipeView
             .measureSize {
                 if !maxLeadingOffsetIsCounted {
@@ -141,7 +143,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
             }
     }
 
-    var trailingView: some View {
+    private var trailingView: some View {
         trailingSwipeView
             .measureSize {
                 if !minTrailingOffsetIsCounted {
@@ -158,7 +160,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
             }
     }
     
-    var swipedMenu: some View {
+    private var swipedMenu: some View {
         HStack(spacing: 0) {
             leadingView
             Spacer()
@@ -167,7 +169,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
         }
     }
     
-    var slidedMenu: some View {
+    private var slidedMenu: some View {
         HStack(spacing: 0) {
             leadingView
                 .offset(x: (-1 * maxLeadingOffset) + offset)
@@ -177,8 +179,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
         }
     }
     
-    func gesturedContent(content: Content) -> some View {
-        
+    private func gesturedContent(content: Content) -> some View {
         content
             .id(id)
             .contentShape(Rectangle()) ///otherwise swipe won't work in vacant area
@@ -186,15 +187,20 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
             .measureSize {
                 contentWidth = $0.width
             }
-            .gesture(
-//                DragGesture(minimumDistance: 15, coordinateSpace: .local)
+            .gesture (
                 DragGesture(minimumDistance: 15, coordinateSpace: .global)
                     .updating($dragGestureActive) { value, state, transaction in
                         state = true
                     }
                     .onChanged { value in
-                        let totalSlide = value.translation.width + oldOffset
+                        let totalSlide: Double
                         
+                        switch layoutDirection {
+                        case .rightToLeft:
+                            totalSlide = -value.translation.width - oldOffset
+                        default:
+                            totalSlide = value.translation.width + oldOffset
+                        }
                         if allowsFullSwipe && ...0 ~= Int(totalSlide) {
                             withAnimation {
                                 offset = totalSlide
@@ -205,17 +211,26 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
                             }
                         }
                     }.onEnded { value in
+                        let translationWidth: Double
+                        
+                        switch layoutDirection {
+                        case .rightToLeft:
+                            translationWidth = -value.translation.width
+                        default:
+                            translationWidth = value.translation.width
+                        }
+                        
                         withAnimation {
                             if
                                 ///user dismisses right buttons
                                 visibleButton == .left(id),
-                                value.translation.width < -20
+                                translationWidth < -20
                             {
                                 reset()
                             } else if
                                 ///user dismisses right buttons
                                 visibleButton == .right(id),
-                                value.translation.width > 20
+                                translationWidth > 20
                             {
                                 reset()
                             } else if
@@ -239,7 +254,7 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
                         
                         if
                             allowsFullSwipe,
-                            value.translation.width < -(contentWidth * 0.7)
+                            translationWidth < -(contentWidth * 0.7)
                         {
                             withAnimation(.linear(duration: 0.3)) {
                                 offset = -contentWidth
@@ -260,9 +275,10 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
                             
                             action?()
                         }
-                    })
-            .valueChanged(of: dragGestureActive) { dragActive in
-                print("id: \(id) state: \(state) visibleButton: \(visibleButton) offset: \(offset)")
+                    }
+            )
+            .valueChanged(of: dragGestureActive) { _ in
+                //print("id: \(id) state: \(state) visibleButton: \(visibleButton) offset: \(offset)")
             }
             .valueChanged(of: state) { value in
                 switch value {
@@ -338,3 +354,4 @@ struct SwipeAction<V1: View, V2: View>: ViewModifier {
         }
     }
 }
+
