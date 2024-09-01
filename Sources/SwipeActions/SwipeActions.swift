@@ -27,8 +27,16 @@ private enum VisibleButton: Equatable {
     case right(UUID)
 }
 
-public struct SwipeAction<V1: View, V2: View>: ViewModifier {
+private enum GestureStatus: Equatable {
+    case idle
+    case started
+    case active
+    case ended
+    case cancelled
+}
 
+public struct SwipeAction<V1: View, V2: View>: ViewModifier {
+    
     @Environment(\.layoutDirection) var layoutDirection
     
     @Binding private var state: SwipeState
@@ -37,10 +45,12 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     @State private var visibleButton: VisibleButton = .none
     
     /**
-     To detect if drag gesture is ended because of known issue that drag gesture onEnded not called:
-     https://stackoverflow.com/questions/58807357/detect-draggesture-cancelation-in-swiftui
+     To detect if drag gesture is ended:
+     https://forums.developer.apple.com/forums/thread/123034
      */
-    @GestureState private var dragGestureActive: Bool = false
+    @GestureState private var isDragging: Bool = false
+    
+    @State private var gestureState: GestureStatus = .idle
     
     @State private var maxLeadingOffset: CGFloat = .zero
     @State private var minTrailingOffset: CGFloat = .zero
@@ -56,7 +66,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     private let menuTyped: MenuType
     private let leadingSwipeView: Group<V1>?
     private let trailingSwipeView: Group<V2>?
-
+    
     private let swipeColor: Color?
     private let allowsFullSwipe: Bool
     private let fullSwipeRole: SwipeRole
@@ -81,7 +91,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
         trailingSwipeView = content().value.1
         self.action = action
     }
-
+    
     init(
         menu: MenuType,
         allowsFullSwipe: Bool = false,
@@ -142,7 +152,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 }
             }
     }
-
+    
     private var trailingView: some View {
         trailingSwipeView
             .measureSize {
@@ -189,96 +199,25 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
             }
             .gesture (
                 DragGesture(minimumDistance: 15, coordinateSpace: .global)
-                    .updating($dragGestureActive) { value, state, transaction in
-                        state = true
+                    .updating($isDragging) { _, isDragging, _ in
+                        isDragging = true
                     }
-                    .onChanged { value in
-                        let totalSlide: Double
-                        
-                        switch layoutDirection {
-                        case .rightToLeft:
-                            totalSlide = -value.translation.width - oldOffset
-                        default:
-                            totalSlide = value.translation.width + oldOffset
-                        }
-                        if allowsFullSwipe && ...0 ~= Int(totalSlide) {
-                            withAnimation {
-                                offset = totalSlide
-                            }
-                        } else if (0 ... Int(maxLeadingOffset) ~= Int(totalSlide)) || (Int(minTrailingOffset) ... 0 ~= Int(totalSlide)) {
-                            withAnimation {
-                                offset = totalSlide
-                            }
-                        }
-                    }.onEnded { value in
-                        let translationWidth: Double
-                        
-                        switch layoutDirection {
-                        case .rightToLeft:
-                            translationWidth = -value.translation.width
-                        default:
-                            translationWidth = value.translation.width
-                        }
-                        
-                        withAnimation {
-                            if
-                                ///user dismisses right buttons
-                                visibleButton == .left(id),
-                                translationWidth < -20
-                            {
-                                reset()
-                            } else if
-                                ///user dismisses right buttons
-                                visibleButton == .right(id),
-                                translationWidth > 20
-                            {
-                                reset()
-                            } else if
-                                offset >  25 || offset < -25
-                            {
-                                ///scroller more then 50% show button
-                                if offset > 0 {
-                                    visibleButton = .left(id)
-                                    offset = maxLeadingOffset
-                                } else {
-                                    visibleButton = .right(id)
-                                    offset = minTrailingOffset
-                                }
-                                oldOffset = offset
-                                state = .swiped(id)
-                                ///Bonus Handling -> set action if user swipe more then x px
-                            } else {
-                                reset()
-                            }
-                        }
-                        
-                        if
-                            allowsFullSwipe,
-                            translationWidth < -(contentWidth * 0.7)
-                        {
-                            withAnimation(.linear(duration: 0.3)) {
-                                offset = -contentWidth
-                            }
-                            
-                            switch fullSwipeRole {
-                            case .destructive:
-                                withAnimation(.linear(duration: 0.3)) {
-                                    isDeletedRow = true
-                                }
-                            case .cancel:
-                                withAnimation {
-                                    reset()
-                                }
-                            default:
-                                break
-                            }
-                            
-                            action?()
-                        }
-                    }
+                    .onChanged(onDragChange(_:))
+                    .onEnded(onDragEnded(_:))
             )
-            .valueChanged(of: dragGestureActive) { _ in
-                //print("id: \(id) state: \(state) visibleButton: \(visibleButton) offset: \(offset)")
+            .valueChanged(of: gestureState) { state in
+                guard state == .started else { return }
+                gestureState = .active
+            }
+            .valueChanged(of: isDragging) { value in
+                DispatchQueue.main.async {
+                    if value, gestureState != .started {
+                        gestureState = .started
+                    } else if !value, gestureState != .ended {
+                        gestureState = .cancelled
+                        reset()
+                    }
+                }
             }
             .valueChanged(of: state) { value in
                 switch value {
@@ -287,7 +226,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                         id != tag,
                         visibleButton != .none
                     {
-                        withAnimation(.linear(duration: 0.3)) {
+                        withAnimation(.default) {
                             reset()
                         }
                         if offset > 0 {
@@ -304,14 +243,14 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 switch (state, visibleButton, offset) {
                 case (.swiped(let id), .left(let id2), _):
                     if id != id2  {
-                        withAnimation(.linear(duration: 0.3)) {
+                        withAnimation(.default) {
                             reset()
                         }
                         state = .swiped(id)
                     }
                 case (.swiped(let id), .right(let id3), _):
                     if id != id3  {
-                        withAnimation(.linear(duration: 0.3)) {
+                        withAnimation(.default) {
                             reset()
                         }
                         state = .swiped(id)
@@ -320,13 +259,97 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                     // for lazy views
                     // after fast scrolling menu can't close fully
                     if (offset != 0 && visibleButton == .none) {
-                        withAnimation(.linear(duration: 0.3)) {
+                        withAnimation(.default) {
                             reset()
                         }
                     }
                     break
                 }
             }
+    }
+    
+    private func onDragChange(_ value: DragGesture.Value) {
+        guard gestureState == .started || gestureState == .active else { return }
+        
+        let totalSlide: CGFloat
+        
+        switch layoutDirection {
+        case .rightToLeft:
+            totalSlide = -value.translation.width + oldOffset
+        default:
+            totalSlide = value.translation.width + oldOffset
+        }
+
+        if allowsFullSwipe {
+            withAnimation {
+                offset = max(min(totalSlide, maxLeadingOffset), -contentWidth)
+            }
+        } else {
+            withAnimation {
+                offset = max(min(totalSlide, maxLeadingOffset), minTrailingOffset)
+            }
+        }
+        
+        // Updating for visible button during gesture
+        if offset > 0 {
+            visibleButton = .left(id)
+        } else if offset < 0 {
+            visibleButton = .right(id)
+        } else {
+            visibleButton = .none
+        }
+    }
+    
+    private func onDragEnded(_ value: DragGesture.Value) {
+        gestureState = .ended
+        
+        let translationWidth: CGFloat
+        switch layoutDirection {
+        case .rightToLeft:
+            translationWidth = -value.translation.width
+        default:
+            translationWidth = value.translation.width
+        }
+        
+        withAnimation {
+            if abs(offset) > 25 {
+                if offset > 0 {
+                    visibleButton = .left(id)
+                    offset = maxLeadingOffset
+                } else {
+                    visibleButton = .right(id)
+                    offset = minTrailingOffset
+                }
+                oldOffset = offset
+                state = .swiped(id)
+            } else {
+                reset()
+            }
+        }
+        
+        if
+            allowsFullSwipe,
+            translationWidth < -(contentWidth * 0.7)
+        {
+            withAnimation(.default) {
+                offset = -contentWidth
+            }
+            
+            switch fullSwipeRole {
+            case .destructive:
+                withAnimation(.default) {
+                    isDeletedRow = true
+                }
+            case .cancel:
+                withAnimation {
+                    reset()
+                }
+            default:
+                break
+            }
+            
+            action?()
+        }
     }
     
     public func body(content: Content) -> some View {
@@ -350,7 +373,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 gesturedContent(content: content)
                     .zIndex(3)
             }
-           .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
+            .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
         }
     }
 }

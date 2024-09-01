@@ -75,70 +75,77 @@ struct ExampleView: View {
             if #available(iOS 14.0, *) {
                 Text("non-destructive swipe role ⬇️")
                     .font(.title)
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(0...100, id: \.self) { cell in
-                            Text("Cell \(cell)")
-                                .frame(height: 60)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color(UIColor.systemBackground))
-                                .addFullSwipeAction(
-                                    menu: .slided,
-                                    swipeColor: .green,
-                                    swipeRole: .`default`,
-                                    state: $state
-                                ) {
-                                    Leading {
-                                        Button {
-                                        } label: {
-                                            Image(systemName: "message")
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(width: 60)
-                                        .frame(maxHeight: .infinity)
-                                        .contentShape(Rectangle())
-                                        .background(Color.blue)
-                                    }
-                                    Trailing {
-                                        Button {
-                                        } label: {
-                                            Image(systemName: "archivebox")
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(width: 60)
-                                        .frame(maxHeight: .infinity)
-                                        .contentShape(Rectangle())
-                                        .background(Color.green)
-                                    }
-                                } action: {
-                                    withAnimation {
-                                        selectedAction = "Full swiped action!"
-                                        fullSwiped = true
-                                    }
-                                }
-                                .swipeHint( // <== HINT
-                                    cell == range.first,
-                                    hintOffset: 60
-                                )
-                                .listRowInsets(EdgeInsets())
-                        }
-                    }
-                }
+                
+                content1
                 //.environment(\.layoutDirection, .rightToLeft) //check for TRL languages
-                .alert(isPresented: $fullSwiped) {
-                    Alert(title: Text(selectedAction),
-                          dismissButton: .default(Text("Archived!")) {
-                        withAnimation {
-                            state = .swiped(UUID())
-                        }
-                    })
-                }
+                    .alert(isPresented: $fullSwiped) {
+                        Alert(title: Text(selectedAction),
+                              dismissButton: .default(Text("Archived!")) {
+                            withAnimation {
+                                state = .swiped(UUID())
+                            }
+                        })
+                    }
             }
         }
         .tabItem {
             Image(systemName: "list.triangle")
             Text("Lazy")
+        }
+    }
+    
+    @available(iOS 14.0, *)
+    var content1: some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(0...100, id: \.self) { cell in
+                    Text("Cell \(cell)")
+                        .frame(height: 60)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .allowMultitouching(false) // <= Disabling multitouch for dragging several cells at the same time 
+                        .addFullSwipeAction(
+                            menu: .slided,
+                            swipeColor: .green,
+                            swipeRole: .`default`,
+                            state: $state
+                        ) {
+                            Leading {
+                                Button {
+                                } label: {
+                                    Image(systemName: "message")
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 60)
+                                .frame(maxHeight: .infinity)
+                                .contentShape(Rectangle())
+                                .background(Color.blue)
+                            }
+                            Trailing {
+                                Button {
+                                } label: {
+                                    Image(systemName: "archivebox")
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 60)
+                                .frame(maxHeight: .infinity)
+                                .contentShape(Rectangle())
+                                .background(Color.green)
+                            }
+                        } action: {
+                            withAnimation {
+                                selectedAction = "Full swiped action!"
+                                fullSwiped = true
+                            }
+                        }
+                        .swipeHint( // <== HINT
+                            cell == range.first,
+                            hintOffset: 60
+                        )
+                        .listRowInsets(EdgeInsets())
+                }
+            }
         }
     }
     

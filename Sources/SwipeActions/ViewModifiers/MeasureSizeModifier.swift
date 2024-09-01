@@ -10,8 +10,10 @@ struct SizePreferenceKey: PreferenceKey {
 struct MeasureSizeModifier: ViewModifier {
     func body(content: Content) -> some View {
         content.overlay(GeometryReader { geometry in
-            Color.clear.preference(key: SizePreferenceKey.self,
-                                   value: geometry.size)
+            Color.clear.preference(
+                key: SizePreferenceKey.self,
+                value: geometry.size
+            )
         })
     }
 }
