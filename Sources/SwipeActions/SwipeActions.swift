@@ -73,63 +73,6 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     private let action: (() -> Void)?
     private let id: UUID = UUID()
     
-    init(
-        menu: MenuType,
-        allowsFullSwipe: Bool = false,
-        fullSwipeRole: SwipeRole = .default,
-        swipeColor: Color? = nil,
-        state: Binding<SwipeState>,
-        @ViewBuilder _ content: @escaping () -> TupleView<(Leading<V1>, Trailing<V2>)>,
-        action: (() -> Void)? = nil
-    ) {
-        menuTyped = menu
-        self.allowsFullSwipe = allowsFullSwipe
-        self.fullSwipeRole = fullSwipeRole
-        self.swipeColor = swipeColor
-        _state = state
-        leadingSwipeView = content().value.0
-        trailingSwipeView = content().value.1
-        self.action = action
-    }
-    
-    init(
-        menu: MenuType,
-        allowsFullSwipe: Bool = false,
-        fullSwipeRole: SwipeRole = .default,
-        swipeColor: Color? = nil,
-        state: Binding<SwipeState>,
-        @ViewBuilder leading: @escaping () -> V1,
-        action: (() -> Void)? = nil
-    ) {
-        menuTyped = menu
-        self.allowsFullSwipe = allowsFullSwipe
-        self.fullSwipeRole = fullSwipeRole
-        self.swipeColor = swipeColor
-        _state = state
-        leadingSwipeView = Group { leading() }
-        trailingSwipeView = nil
-        self.action = action
-    }
-    
-    init(
-        menu: MenuType,
-        allowsFullSwipe: Bool = false,
-        fullSwipeRole: SwipeRole = .default,
-        swipeColor: Color? = nil,
-        state: Binding<SwipeState>,
-        @ViewBuilder trailing: @escaping () -> V2,
-        action: (() -> Void)? = nil
-    ) {
-        menuTyped = menu
-        self.allowsFullSwipe = allowsFullSwipe
-        self.fullSwipeRole = fullSwipeRole
-        self.swipeColor = swipeColor
-        _state = state
-        trailingSwipeView = Group { trailing() }
-        leadingSwipeView = nil
-        self.action = action
-    }
-    
     private func reset() {
         visibleButton = .none
         offset = 0
@@ -355,26 +298,87 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     public func body(content: Content) -> some View {
         switch menuTyped {
         case .slided:
-            ZStack {
-                swipeColor
-                    .zIndex(1)
-                slidedMenu
-                    .zIndex(2)
-                gesturedContent(content: content)
-                    .zIndex(3)
-            }
+            gesturedContent(content: content).background(
+                ZStack {
+                    swipeColor
+                        .zIndex(1)
+                    slidedMenu
+                        .zIndex(2)
+                },
+                alignment: .center
+            )
             .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
         case .swiped:
-            ZStack {
-                swipeColor
-                    .zIndex(1)
-                swipedMenu
-                    .zIndex(2)
-                gesturedContent(content: content)
-                    .zIndex(3)
-            }
+            gesturedContent(content: content).background(
+                ZStack {
+                    swipeColor
+                        .zIndex(1)
+                    slidedMenu
+                        .zIndex(2)
+                },
+                alignment: .center
+            )
             .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
         }
+    }
+}
+
+public extension SwipeAction {
+    init(
+        menu: MenuType,
+        allowsFullSwipe: Bool = false,
+        fullSwipeRole: SwipeRole = .default,
+        swipeColor: Color? = nil,
+        state: Binding<SwipeState>,
+        @ViewBuilder _ content: @escaping () -> TupleView<(Leading<V1>, Trailing<V2>)>,
+        action: (() -> Void)? = nil
+    ) {
+        menuTyped = menu
+        self.allowsFullSwipe = allowsFullSwipe
+        self.fullSwipeRole = fullSwipeRole
+        self.swipeColor = swipeColor
+        _state = state
+        leadingSwipeView = content().value.0
+        trailingSwipeView = content().value.1
+        self.action = action
+    }
+    
+    init(
+        menu: MenuType,
+        allowsFullSwipe: Bool = false,
+        fullSwipeRole: SwipeRole = .default,
+        swipeColor: Color? = nil,
+        state: Binding<SwipeState>,
+        @ViewBuilder leading: @escaping () -> V1,
+        action: (() -> Void)? = nil
+    ) {
+        menuTyped = menu
+        self.allowsFullSwipe = allowsFullSwipe
+        self.fullSwipeRole = fullSwipeRole
+        self.swipeColor = swipeColor
+        _state = state
+        leadingSwipeView = Group { leading() }
+        trailingSwipeView = nil
+        self.action = action
+    }
+    
+    init(
+        menu: MenuType,
+        allowsFullSwipe: Bool = false,
+        fullSwipeRole: SwipeRole = .default,
+        swipeColor: Color? = nil,
+        state: Binding<SwipeState>,
+        @ViewBuilder trailing: @escaping () -> V2,
+        action: (() -> Void)? = nil
+    ) {
+        menuTyped = menu
+        self.allowsFullSwipe = allowsFullSwipe
+        self.fullSwipeRole = fullSwipeRole
+        self.swipeColor = swipeColor
+        _state = state
+        trailingSwipeView = Group { trailing() }
+        leadingSwipeView = nil
+        self.action = action
     }
 }
 
