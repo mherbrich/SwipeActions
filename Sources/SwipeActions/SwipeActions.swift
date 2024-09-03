@@ -96,6 +96,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
     private var leadingView: some View {
         leadingSwipeView
+            .frame(maxHeight: contentHeight)
             .id(leadingViewId)
             .measureSize {
                 if maxLeadingOffsetIsCounted == false {
@@ -119,6 +120,8 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
     private var trailingView: some View {
         trailingSwipeView
+            .frame(maxHeight: contentHeight)
+            .measured()
             .id(trailingViewId)
             .measureSize {
                 if minTrailingOffsetIsCounted == false {
@@ -166,6 +169,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
             .offset(x: offset)
             .measureSize {
                 contentWidth = $0.width
+                contentHeight = $0.height
             }
             .gesture (
                 DragGesture(minimumDistance: 15, coordinateSpace: .global)
@@ -343,7 +347,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 gesturedContent(content: content)
                     .zIndex(3)
             }
-           .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
+            .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
         }
     }
 }
