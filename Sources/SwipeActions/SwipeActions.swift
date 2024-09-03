@@ -56,9 +56,14 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     @State private var minTrailingOffset: CGFloat = .zero
     
     @State private var contentWidth: CGFloat = .zero
+    @State private var contentHeight: CGFloat = .zero
     @State private var isDeletedRow: Bool = false
+    
     /**
-     For lazy views: because of measuring size occurred every onAppear
+     For lazy views
+     ________________________
+     because of measuring size 
+     occurred every onAppear
      */
     @State private var maxLeadingOffsetIsCounted: Bool = false
     @State private var minTrailingOffsetIsCounted: Bool = false
@@ -73,6 +78,16 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     private let action: (() -> Void)?
     private let id: UUID = UUID()
     
+    /**
+     For catching any changing in views
+     _________________________
+     We can't detect what exactly has change
+     that's why we rebuild the view only with
+     generating new id:
+     */
+    @State private var leadingViewId: UUID = UUID()
+    @State private var trailingViewId: UUID = UUID()
+    
     private func reset() {
         visibleButton = .none
         offset = 0
@@ -81,35 +96,47 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
     private var leadingView: some View {
         leadingSwipeView
+            .id(leadingViewId)
             .measureSize {
-                if !maxLeadingOffsetIsCounted {
+                if maxLeadingOffsetIsCounted == false {
                     maxLeadingOffset = maxLeadingOffset + $0.width
                 }
             }
             .onAppear {
-                /**
-                 maxLeadingOffsetIsCounted for of lazy views
-                 */
                 if #available(iOS 15, *) {
-                    maxLeadingOffsetIsCounted = true
+                    maxLeadingOffsetIsCounted = true // for of lazy views
                 }
+            }
+            .valueChanged(of: leadingSwipeView.debugDescription.hashValue) { _ in
+                withAnimation(.default) {
+                    maxLeadingOffsetIsCounted = false
+                    maxLeadingOffset = .zero
+                    reset()
+                }
+                leadingViewId = UUID()
             }
     }
     
     private var trailingView: some View {
         trailingSwipeView
+            .id(trailingViewId)
             .measureSize {
-                if !minTrailingOffsetIsCounted {
+                if minTrailingOffsetIsCounted == false {
                     minTrailingOffset = (abs(minTrailingOffset) + $0.width) * -1
                 }
             }
             .onAppear {
-                /**
-                 maxLeadingOffsetIsCounted for of lazy views
-                 */
                 if #available(iOS 15, *) {
-                    minTrailingOffsetIsCounted = true
+                    minTrailingOffsetIsCounted = true // for of lazy views
                 }
+            }
+            .valueChanged(of: trailingSwipeView.debugDescription.hashValue) { _ in
+                withAnimation(.default) {
+                    minTrailingOffsetIsCounted = false
+                    minTrailingOffset = .zero
+                    reset()
+                }
+                trailingViewId = UUID()
             }
     }
     
@@ -233,7 +260,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
             }
         }
         
-        // Updating for visible button during gesture
+        // Updating visible buttons during gesture:
         if offset > 0 {
             visibleButton = .left(id)
         } else if offset < 0 {
@@ -298,27 +325,25 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     public func body(content: Content) -> some View {
         switch menuTyped {
         case .slided:
-            gesturedContent(content: content).background(
-                ZStack {
-                    swipeColor
-                        .zIndex(1)
-                    slidedMenu
-                        .zIndex(2)
-                },
-                alignment: .center
-            )
+            ZStack {
+                swipeColor
+                    .zIndex(1)
+                slidedMenu
+                    .zIndex(2)
+                gesturedContent(content: content)
+                    .zIndex(3)
+            }
             .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
         case .swiped:
-            gesturedContent(content: content).background(
-                ZStack {
-                    swipeColor
-                        .zIndex(1)
-                    slidedMenu
-                        .zIndex(2)
-                },
-                alignment: .center
-            )
-            .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
+            ZStack {
+                swipeColor
+                    .zIndex(1)
+                swipedMenu
+                    .zIndex(2)
+                gesturedContent(content: content)
+                    .zIndex(3)
+            }
+           .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
         }
     }
 }
@@ -381,4 +406,3 @@ public extension SwipeAction {
         self.action = action
     }
 }
-
