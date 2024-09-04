@@ -21,6 +21,8 @@ struct ExampleView: View {
     
     @State var range: [Int] = [1,2,3,4,5,6,7,8,9,10]
     
+    @State private var toggles: [Bool] = Array(repeating: false, count: 100) // for tab1
+    
     var menu: some View {
         Group {
             Button {
@@ -99,16 +101,16 @@ struct ExampleView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(0...100, id: \.self) { cell in
-                    Text("Cell \(cell)")
-                        .frame(height: 60)
+                    Text(toggles[cell] ? "Cell \(cell)\npinned" : "Cell \(cell)")
+                    .frame(height: toggles[cell] ? 70 : 60)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color(UIColor.systemBackground))
                         .allowMultitouching(false) // <= Disabling multitouch for dragging several cells at the same time 
                         .addFullSwipeAction(
                             menu: .slided,
-                            swipeColor: .green,
-                            swipeRole: .`default`,
+                            swipeColor: .gray,
+                            swipeRole: .default,
                             state: $state
                         ) {
                             Leading {
@@ -122,17 +124,38 @@ struct ExampleView: View {
                                 .contentShape(Rectangle())
                                 .background(Color.blue)
                             }
+                            
                             Trailing {
-                                Button {
-                                } label: {
-                                    Image(systemName: "archivebox")
-                                        .foregroundColor(.white)
+                                HStack {
+                                    Button {
+                                        toggles[cell].toggle()
+                                    } label: {
+                                        HStack {
+                                            Text(toggles[cell] ? "Unpin" : "Pin")
+                                                .font(toggles[cell] ? .title3 : .title2)
+                                                .foregroundColor(.white)
+                                            Image(systemName: toggles[cell] ? "pin.fill" : "pin")
+                                                .foregroundColor(.white)
+                                        }
+                                        .padding()
+                                    }
+                                    .frame(maxHeight: .infinity)
+                                    .contentShape(Rectangle())
+                                    .background(Color.green)
+                                    
+                                    Button {
+                                        print("archive \(cell)")
+                                    } label: {
+                                        Image(systemName: "archivebox")
+                                            .foregroundColor(.white)
+                                    }
+                                    .frame(width: 80)
+                                    .frame(maxHeight: .infinity)
+                                    .contentShape(Rectangle())
+                                    .background(Color.gray)
                                 }
-                                .frame(width: 60)
-                                .frame(maxHeight: .infinity)
-                                .contentShape(Rectangle())
-                                .background(Color.green)
                             }
+                            
                         } action: {
                             withAnimation {
                                 selectedAction = "Full swiped action!"
@@ -141,7 +164,7 @@ struct ExampleView: View {
                         }
                         .swipeHint( // <== HINT
                             cell == range.first,
-                            hintOffset: 60
+                            hintOffset: 80
                         )
                         .listRowInsets(EdgeInsets())
                 }

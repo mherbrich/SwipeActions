@@ -55,6 +55,9 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     @State private var maxLeadingOffset: CGFloat = .zero
     @State private var minTrailingOffset: CGFloat = .zero
     
+    @State private var lastTrailingWidth: CGFloat = .zero
+    @State private var lastLeadingWidth: CGFloat = .zero
+    
     @State private var contentWidth: CGFloat = .zero
     @State private var contentHeight: CGFloat = .zero
     @State private var isDeletedRow: Bool = false
@@ -99,47 +102,42 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
             .frame(maxHeight: contentHeight)
             .id(leadingViewId)
             .measureSize {
-                if maxLeadingOffsetIsCounted == false {
-                    maxLeadingOffset = maxLeadingOffset + $0.width
-                }
-            }
-            .onAppear {
-                if #available(iOS 15, *) {
-                    maxLeadingOffsetIsCounted = true // for of lazy views
+                if maxLeadingOffsetIsCounted == false || $0.width != lastLeadingWidth {
+                    maxLeadingOffset = $0.width
+                    lastLeadingWidth = $0.width
+                    maxLeadingOffsetIsCounted = true
                 }
             }
             .valueChanged(of: leadingSwipeView.debugDescription.hashValue) { _ in
+                leadingViewId = UUID()
+                maxLeadingOffsetIsCounted = false
+                maxLeadingOffset = .zero
+                lastLeadingWidth = .zero
                 withAnimation(.default) {
-                    maxLeadingOffsetIsCounted = false
-                    maxLeadingOffset = .zero
                     reset()
                 }
-                leadingViewId = UUID()
             }
     }
     
     private var trailingView: some View {
         trailingSwipeView
             .frame(maxHeight: contentHeight)
-            .measured()
             .id(trailingViewId)
             .measureSize {
-                if minTrailingOffsetIsCounted == false {
-                    minTrailingOffset = (abs(minTrailingOffset) + $0.width) * -1
-                }
-            }
-            .onAppear {
-                if #available(iOS 15, *) {
-                    minTrailingOffsetIsCounted = true // for of lazy views
+                if minTrailingOffsetIsCounted == false || $0.width != lastTrailingWidth {
+                    minTrailingOffset = -$0.width
+                    lastTrailingWidth = $0.width
+                    minTrailingOffsetIsCounted = true
                 }
             }
             .valueChanged(of: trailingSwipeView.debugDescription.hashValue) { _ in
+                trailingViewId = UUID()
+                minTrailingOffsetIsCounted = false
+                minTrailingOffset = .zero
+                lastTrailingWidth = .zero
                 withAnimation(.default) {
-                    minTrailingOffsetIsCounted = false
-                    minTrailingOffset = .zero
                     reset()
                 }
-                trailingViewId = UUID()
             }
     }
     
