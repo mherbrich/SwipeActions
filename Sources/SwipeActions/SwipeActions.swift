@@ -37,6 +37,7 @@ private enum GestureStatus: Equatable {
 
 public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
+    @Environment(\.identifier) var parentId
     @Environment(\.layoutDirection) var layoutDirection
     
     @Binding private var state: SwipeState
@@ -71,6 +72,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     @State private var maxLeadingOffsetIsCounted: Bool = false
     @State private var minTrailingOffsetIsCounted: Bool = false
     
+    private let manualId: UUID = UUID() // custom id
     private let menuTyped: MenuType
     private let leadingSwipeView: Group<V1>?
     private let trailingSwipeView: Group<V2>?
@@ -79,7 +81,6 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     private let allowsFullSwipe: Bool
     private let fullSwipeRole: SwipeRole
     private let action: (() -> Void)?
-    private let id: UUID = UUID()
     
     /**
      For catching any changing in views
@@ -99,7 +100,9 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
     private var leadingView: some View {
         leadingSwipeView
+            .opacity(isDeletedRow ? 0 : 1)
             .frame(maxHeight: contentHeight)
+            .animation(.none, value: isDeletedRow)
             .id(leadingViewId)
             .measureSize {
                 if maxLeadingOffsetIsCounted == false || $0.width != lastLeadingWidth {
@@ -121,7 +124,9 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
     private var trailingView: some View {
         trailingSwipeView
+            .opacity(isDeletedRow ? 0 : 1)
             .frame(maxHeight: contentHeight)
+            .animation(.none, value: isDeletedRow)
             .id(trailingViewId)
             .measureSize {
                 if minTrailingOffsetIsCounted == false || $0.width != lastTrailingWidth {
@@ -146,6 +151,12 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
             leadingView
             Spacer()
             trailingView
+                .background(
+                    Rectangle()
+                        .fill(swipeColor ?? .clear)
+                        .frame(width: abs(offset) + lastTrailingWidth)
+                    ,alignment: .leading
+                )
                 .offset(x: allowsFullSwipe && offset < minTrailingOffset ? (-1 * minTrailingOffset) + offset : 0)
         }
     }
@@ -156,13 +167,22 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 .offset(x: (-1 * maxLeadingOffset) + offset)
             Spacer()
             trailingView
+                .background(
+                    Rectangle()
+                        .fill(swipeColor ?? .clear)
+                        .frame(width: abs(offset) + lastTrailingWidth)
+                    ,alignment: .leading
+                )
                 .offset(x: (-1 * minTrailingOffset) + offset)
         }
     }
     
+    private var identifier: UUID {
+        parentId?.uuid ?? manualId
+    }
+    
     private func gesturedContent(content: Content) -> some View {
         content
-            .id(id)
             .contentShape(Rectangle()) ///otherwise swipe won't work in vacant area
             .offset(x: offset)
             .measureSize {
@@ -195,16 +215,16 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 switch value {
                 case .swiped(let tag):
                     if
-                        id != tag,
+                        identifier != tag,
                         visibleButton != .none
                     {
                         withAnimation(.default) {
                             reset()
                         }
                         if offset > 0 {
-                            visibleButton = .left(id)
+                            visibleButton = .left(identifier)
                         } else {
-                            visibleButton = .right(id)
+                            visibleButton = .right(identifier)
                         }
                     }
                 default:
@@ -264,9 +284,9 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
         
         // Updating visible buttons during gesture:
         if offset > 0 {
-            visibleButton = .left(id)
+            visibleButton = .left(identifier)
         } else if offset < 0 {
-            visibleButton = .right(id)
+            visibleButton = .right(identifier)
         } else {
             visibleButton = .none
         }
@@ -286,14 +306,14 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
         withAnimation {
             if abs(offset) > 25 {
                 if offset > 0 {
-                    visibleButton = .left(id)
+                    visibleButton = .left(identifier)
                     offset = maxLeadingOffset
                 } else {
-                    visibleButton = .right(id)
+                    visibleButton = .right(identifier)
                     offset = minTrailingOffset
                 }
                 oldOffset = offset
-                state = .swiped(id)
+                state = .swiped(identifier)
             } else {
                 reset()
             }
@@ -301,7 +321,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
         
         if
             allowsFullSwipe,
-            translationWidth < -(contentWidth * 0.7)
+            translationWidth < -(contentWidth * 0.8)
         {
             withAnimation(.default) {
                 offset = -contentWidth
@@ -328,24 +348,28 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
         switch menuTyped {
         case .slided:
             ZStack {
-                swipeColor
-                    .zIndex(1)
                 slidedMenu
-                    .zIndex(2)
-                gesturedContent(content: content)
-                    .zIndex(3)
-            }
-            .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
-        case .swiped:
-            ZStack {
-                swipeColor
+                    .frame(height: isDeletedRow ? 0 : nil)
                     .zIndex(1)
-                swipedMenu
-                    .zIndex(2)
+                
                 gesturedContent(content: content)
-                    .zIndex(3)
+                    .opacity(isDeletedRow ? 0 : 1)
+                    .frame(height: isDeletedRow ? 0 : nil)
+                    .zIndex(2)
             }
-            .frame(height: isDeletedRow ? 0 : nil, alignment: .top)
+            .compositingGroup()
+        case .swiped:        
+            ZStack {
+                swipedMenu
+                    .frame(height: isDeletedRow ? 0 : nil)
+                    .zIndex(1)
+                
+                gesturedContent(content: content)
+                    .opacity(isDeletedRow ? 0 : 1)
+                    .frame(height: isDeletedRow ? 0 : nil)
+                    .zIndex(2)
+            }
+            .compositingGroup()
         }
     }
 }
