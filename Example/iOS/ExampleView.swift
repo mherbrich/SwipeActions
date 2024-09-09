@@ -16,10 +16,14 @@ struct ExampleView: View {
     
     @State var state: SwipeState = .untouched
     @State private var showingAlert = false
+    @State private var showingAlertSecond = false
     @State private var selectedAction: String = ""
     @State private var fullSwiped = false
     
-    @State var range: [Int] = [1,2,3,4,5,6,7,8,9,10]
+    @State var range: [Int] = Array(0...30)
+    @State var range2: [Int] = Array(0...30)
+    
+    @State private var toggles: [Bool] = Array(repeating: false, count: 100) // for tab1
     
     var menu: some View {
         Group {
@@ -75,70 +79,100 @@ struct ExampleView: View {
             if #available(iOS 14.0, *) {
                 Text("non-destructive swipe role ⬇️")
                     .font(.title)
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(0...100, id: \.self) { cell in
-                            Text("Cell \(cell)")
-                                .frame(height: 60)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color(UIColor.systemBackground))
-                                .addFullSwipeAction(
-                                    menu: .slided,
-                                    swipeColor: .green,
-                                    swipeRole: .`default`,
-                                    state: $state
-                                ) {
-                                    Leading {
-                                        Button {
-                                        } label: {
-                                            Image(systemName: "message")
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(width: 60)
-                                        .frame(maxHeight: .infinity)
-                                        .contentShape(Rectangle())
-                                        .background(Color.blue)
-                                    }
-                                    Trailing {
-                                        Button {
-                                        } label: {
-                                            Image(systemName: "archivebox")
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(width: 60)
-                                        .frame(maxHeight: .infinity)
-                                        .contentShape(Rectangle())
-                                        .background(Color.green)
-                                    }
-                                } action: {
-                                    withAnimation {
-                                        selectedAction = "Full swiped action!"
-                                        fullSwiped = true
-                                    }
-                                }
-                                .swipeHint( // <== HINT
-                                    cell == range.first,
-                                    hintOffset: 60
-                                )
-                                .listRowInsets(EdgeInsets())
-                        }
-                    }
-                }
+                
+                content1
                 //.environment(\.layoutDirection, .rightToLeft) //check for TRL languages
-                .alert(isPresented: $fullSwiped) {
-                    Alert(title: Text(selectedAction),
-                          dismissButton: .default(Text("Archived!")) {
-                        withAnimation {
-                            state = .swiped(UUID())
-                        }
-                    })
-                }
+                    .alert(isPresented: $fullSwiped) {
+                        Alert(title: Text(selectedAction),
+                              dismissButton: .default(Text("Archived!")) {
+                            withAnimation {
+                                state = .swiped(UUID())
+                            }
+                        })
+                    }
             }
         }
         .tabItem {
             Image(systemName: "list.triangle")
             Text("Lazy")
+        }
+    }
+    
+    @available(iOS 14.0, *)
+    var content1: some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(0...100, id: \.self) { cell in
+                    Text(toggles[cell] ? "Cell \(cell)\npinned" : "Cell \(cell)")
+                    .frame(height: toggles[cell] ? 70 : 60)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .allowMultitouching(false) // <= Disabling multitouch for dragging several cells at the same time
+                        .onTapGesture {
+                            print("Cell \(cell) tapped")
+                        }
+                        .addFullSwipeAction(
+                            menu: .slided,
+                            swipeColor: .gray,
+                            swipeRole: .default,
+                            state: $state
+                        ) {
+                            Leading {
+                                Button {
+                                } label: {
+                                    Image(systemName: "message")
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 60)
+                                .frame(maxHeight: .infinity)
+                                .contentShape(Rectangle())
+                                .background(Color.blue)
+                            }
+                            
+                            Trailing {
+                                HStack(spacing: 0) {
+                                    Button {
+                                        toggles[cell].toggle()
+                                    } label: {
+                                        HStack {
+                                            Text(toggles[cell] ? "Unpin" : "Pin")
+                                                .font(toggles[cell] ? .title3 : .title2)
+                                                .foregroundColor(.white)
+                                            Image(systemName: toggles[cell] ? "pin.fill" : "pin")
+                                                .foregroundColor(.white)
+                                        }
+                                        .padding()
+                                        .frame(maxHeight: .infinity)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .background(Color.green)
+                                    
+                                    Button {
+                                        print("archive \(cell)")
+                                    } label: {
+                                        Image(systemName: "archivebox")
+                                            .foregroundColor(.white)
+                                            .frame(width: 80)
+                                            .frame(maxHeight: .infinity)
+                                            .contentShape(Rectangle())
+                                    }
+                                    .background(Color.gray)
+                                }
+                            }
+                            
+                        } action: {
+                            withAnimation {
+                                selectedAction = "Full swiped action!"
+                                fullSwiped = true
+                            }
+                        }
+                        .swipeHint( // <== HINT
+                            cell == range.first,
+                            hintOffset: 80
+                        )
+                }
+            }
         }
     }
     
@@ -159,63 +193,74 @@ struct ExampleView: View {
                             .contentShape(Rectangle())
                             .padding()
                             .background(Color(UIColor.systemBackground))
+                            .allowMultitouching(false)
+                            .onTapGesture {
+                                print("Cell \(cell) tapped")
+                            }
                             .addFullSwipeAction(
-                                menu: .slided,
+                                menu: .swiped,
                                 swipeColor: .red,
                                 state: $state
                             ) {
                                 Leading {
-                                    Button {
-                                        selectedAction = "cell \(cell) checked!"
-                                        showingAlert = true
-                                    } label: {
-                                        Image(systemName: "checkmark.circle")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.green)
-                                    
-                                    Button {
-                                        selectedAction = "message cell \(cell)"
-                                        showingAlert = true
-                                    } label: {
-                                        Image(systemName: "message")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.blue)
-                                }
-                                Trailing {
-                                    Button {
-                                        selectedAction = "cell \(cell) archived!"
-                                        showingAlert = true
-                                    } label: {
-                                        Image(systemName: "archivebox")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.gray)
-                                    
-                                    Button {
-                                        withAnimation {
-                                            if let index = range.firstIndex(of: cell) {
-                                                range.remove(at: index)
-                                            }
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            selectedAction = "cell \(cell) checked!"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "checkmark.circle")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
                                         }
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .foregroundColor(.white)
+                                        .background(Color.green)
+                                        
+                                        Button {
+                                            selectedAction = "message cell \(cell)"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "message")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.blue)
                                     }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.red)
+                                    .drawingGroup()
+                                }
+                                
+                                Trailing {
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            selectedAction = "cell \(cell) archived!"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "archivebox")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.gray)
+                                        
+                                        Button {
+                                            withAnimation {
+                                                if let index = range.firstIndex(of: cell) {
+                                                    range.remove(at: index)
+                                                }
+                                            }
+                                        } label: {
+                                            Image(systemName: "trash")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.red)
+                                    }
+                                    .drawingGroup()
                                 }
                             } action: {
                                 withAnimation {
@@ -224,70 +269,97 @@ struct ExampleView: View {
                                     }
                                 }
                             }
-                            .listRowInsets(EdgeInsets())
+                            .identifier(cell)
+                            .animation(.linear, value: range)
                     }
                 }
             }
             .alert(isPresented: $showingAlert) {
                 Alert(title: Text(selectedAction), dismissButton: .cancel())
             }
-            
+
             Text("non-destructive swipe role ⬇️")
                 .font(.title)
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(0...10, id: \.self) { cell in
+                    ForEach(range2, id: \.self) { cell in
                         Text("Cell \(cell)")
                             .frame(height: 60)
                             .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
                             .padding()
                             .background(Color(UIColor.systemBackground))
+                            .transition(.asymmetric(insertion: .identity, removal: .move(edge: .leading)))
+                            .onTapGesture {
+                                print("Cell \(cell) tapped")
+                            }
                             .addFullSwipeAction(
-                                menu: .slided,
-                                swipeColor: .green,
+                                menu: .swiped,
+                                swipeColor: .gray,
                                 swipeRole: .default,
                                 state: $state
                             ) {
                                 Leading {
-                                    Button {
-                                    } label: {
-                                        Image(systemName: "message")
-                                            .foregroundColor(.white)
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            selectedAction = "cell \(cell) checked!"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "checkmark.circle")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.green)
+                                        
+                                        Button {
+                                            selectedAction = "message cell \(cell)"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "message")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.blue)
                                     }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.blue)
+                                    .drawingGroup()
                                 }
+                                
                                 Trailing {
                                     Button {
+                                        selectedAction = "Cell \(cell) archived!"
+                                        showingAlertSecond = true
                                     } label: {
                                         Image(systemName: "archivebox")
                                             .foregroundColor(.white)
+                                            .frame(width: 60)
+                                            .frame(maxHeight: .infinity)
+                                            .contentShape(Rectangle())
                                     }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.green)
+                                    .background(Color.gray)
                                 }
+                                
                             } action: {
                                 withAnimation {
-                                    selectedAction = "Full swiped action!"
-                                    fullSwiped = true
+                                    selectedAction = "Cell \(cell) archived!"
+                                    showingAlertSecond = true
                                 }
                             }
                     }
                 }
-                .alert(isPresented: $fullSwiped) {
-                    Alert(
-                        title: Text(selectedAction),
-                        dismissButton: .default(Text("Archived!")) {
-                            withAnimation {
-                                state = .swiped(UUID())
-                            }
+            }
+            .alert(isPresented: $showingAlertSecond) {
+                Alert(
+                    title: Text(selectedAction),
+                    dismissButton: .default(Text("OK")) {
+                        withAnimation {
+                            state = .swiped(UUID())
                         }
-                    )
-                }
+                    }
+                )
             }
         }
         .tabItem {
@@ -324,46 +396,51 @@ struct ExampleView: View {
                                 state: $state
                             ) {
                                 Leading {
-                                    Button {
-                                        print("check \(cell)")
-                                    } label: {
-                                        Image(systemName: "checkmark.circle")
-                                            .foregroundColor(.white)
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            print("check \(cell)")
+                                        } label: {
+                                            Image(systemName: "checkmark.circle")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.green)
+                                        
+                                        Button {
+                                            print("message \(cell)")
+                                        } label: {
+                                            Image(systemName: "message")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.blue)
                                     }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.green)
-                                    
-                                    Button {
-                                        print("message \(cell)")
-                                    } label: {
-                                        Image(systemName: "message")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.blue)
                                 }
+                                
                                 Trailing {
-                                    Button {
-                                        print("archive \(cell)")
-                                    } label: {
-                                        Image(systemName: "archivebox")
-                                            .foregroundColor(.white)
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            print("archive \(cell)")
+                                        } label: {
+                                            Image(systemName: "archivebox")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.gray)
+                                        
+                                        Button {
+                                            print("remove \(cell)")
+                                        } label: {
+                                            Image(systemName: "trash")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.red)
                                     }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.gray)
-                                    
-                                    Button {
-                                        print("remove \(cell)")
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.red)
                                 }
                             }
                     }
@@ -385,47 +462,51 @@ struct ExampleView: View {
                             .background(Color.yellow.opacity(0.2))
                             .addSwipeAction(state: $state) {
                                 Leading {
-                                    Button {
-                                        print("check \(cell)")
-                                    } label: {
-                                        Image(systemName: "checkmark.circle")
-                                            .foregroundColor(.white)
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            print("check \(cell)")
+                                        } label: {
+                                            Image(systemName: "checkmark.circle")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.green)
+                                        
+                                        Button {
+                                            print("message \(cell)")
+                                        } label: {
+                                            Image(systemName: "message")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.blue)
                                     }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.green)
-                                    
-                                    Button {
-                                        print("message \(cell)")
-                                    } label: {
-                                        Image(systemName: "message")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.blue)
                                 }
                                 
                                 Trailing {
-                                    Button {
-                                        print("archive \(cell)")
-                                    } label: {
-                                        Image(systemName: "archivebox")
-                                            .foregroundColor(.white)
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            print("archive \(cell)")
+                                        } label: {
+                                            Image(systemName: "archivebox")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.gray)
+                                        
+                                        Button {
+                                            print("remove \(cell)")
+                                        } label: {
+                                            Image(systemName: "trash")
+                                                .foregroundColor(.white)
+                                                .frame(width: 80, height: 80)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.red)
                                     }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.gray)
-                                    
-                                    Button {
-                                        print("remove \(cell)")
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 80, height: 80)
-                                    .contentShape(Rectangle())
-                                    .background(Color.red)
                                 }
                             }
                     }
@@ -461,9 +542,9 @@ struct ExampleView: View {
                                 } label: {
                                     Image(systemName: "message")
                                         .foregroundColor(.white)
+                                        .frame(width: 60, height: 80)
+                                        .contentShape(Rectangle())
                                 }
-                                .frame(width: 60, height: 80)
-                                .contentShape(Rectangle())
                                 .background(Color.blue)
                             }
                             Trailing {
@@ -471,9 +552,9 @@ struct ExampleView: View {
                                 } label: {
                                     Image(systemName: "archivebox")
                                         .foregroundColor(.white)
+                                        .frame(width: 60, height: 80)
+                                        .contentShape(Rectangle())
                                 }
-                                .frame(width: 60, height: 80)
-                                .contentShape(Rectangle())
                                 .background(Color.green)
                             }
                         }.listRowInsets(EdgeInsets())
@@ -484,7 +565,7 @@ struct ExampleView: View {
             }
             
             VStack(spacing: 16) {
-                Text(".slided ⬇️")
+                Text(".slided ⬇️ (only trailing zone)")
                     .font(.title)
                 
                 List(elements) { e in
@@ -502,11 +583,12 @@ struct ExampleView: View {
                             } label: {
                                 Image(systemName: "trash")
                                     .foregroundColor(.white)
+                                    .frame(width: 60, height: 80, alignment: .center)
+                                    .contentShape(Rectangle())
                             }
-                            .frame(width: 60, height: 80, alignment: .center)
-                            .contentShape(Rectangle())
                             .background(Color.red)
-                        }.listRowInsets(EdgeInsets())
+                        }
+                        .listRowInsets(EdgeInsets())
                         .hideSeparators()
                     
                 }
@@ -535,18 +617,20 @@ struct ExampleView: View {
                     .frame(maxWidth: .infinity)
                     .background(Color.green.opacity(0.8))
                     .addSwipeAction(edge: .trailing) {
-                        Rectangle()
-                            .fill(Color.green.opacity(0.8))
-                            .frame(width: 8.0, height: 80)
-                        
-                        Button {
-                        } label: {
-                            Image(systemName: "message")
-                                .foregroundColor(.white)
+                        HStack(spacing: 0) {
+                            Rectangle()
+                                .fill(Color.green.opacity(0.8))
+                                .frame(width: 8.0, height: 80)
+                            
+                            Button {
+                            } label: {
+                                Image(systemName: "message")
+                                    .foregroundColor(.white)
+                                    .frame(width: 60, height: 80)
+                                    .contentShape(Rectangle())
+                            }
+                            .background(Color.blue)
                         }
-                        .frame(width: 60, height: 80)
-                        .contentShape(Rectangle())
-                        .background(Color.blue)
                     }
                     
                     VStack(spacing: 12) {
@@ -568,9 +652,9 @@ struct ExampleView: View {
                         } label: {
                             Image(systemName: "message")
                                 .foregroundColor(.white)
+                                .frame(width: 100, height: 264)
+                                .contentShape(Rectangle())
                         }
-                        .frame(width: 100, height: 264)
-                        .contentShape(Rectangle())
                         .background(Color.blue)
                     }
                 }
@@ -593,57 +677,61 @@ struct ExampleView: View {
                                 state: $state
                             ) {
                                 Leading {
-                                    Button {
-                                        selectedAction = "cell \(cell) checked!"
-                                        showingAlert = true
-                                    } label: {
-                                        Image(systemName: "checkmark.circle")
-                                            .foregroundColor(.white)
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            selectedAction = "cell \(cell) checked!"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "checkmark.circle")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.green)
+                                        
+                                        Button {
+                                            selectedAction = "message cell \(cell)"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "message")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.blue)
                                     }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.green)
-                                    
-                                    Button {
-                                        selectedAction = "message cell \(cell)"
-                                        showingAlert = true
-                                    } label: {
-                                        Image(systemName: "message")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.blue)
                                 }
                                 Trailing {
-                                    Button {
-                                        selectedAction = "cell \(cell) archived!"
-                                        showingAlert = true
-                                    } label: {
-                                        Image(systemName: "archivebox")
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.gray)
-                                    
-                                    Button {
-                                        withAnimation {
-                                            if let index = range.firstIndex(of: cell) {
-                                                range.remove(at: index)
-                                            }
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            selectedAction = "cell \(cell) archived!"
+                                            showingAlert = true
+                                        } label: {
+                                            Image(systemName: "archivebox")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
                                         }
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .foregroundColor(.white)
+                                        .background(Color.gray)
+                                        
+                                        Button {
+                                            withAnimation {
+                                                if let index = range.firstIndex(of: cell) {
+                                                    range.remove(at: index)
+                                                }
+                                            }
+                                        } label: {
+                                            Image(systemName: "trash")
+                                                .foregroundColor(.white)
+                                                .frame(width: 60)
+                                                .frame(maxHeight: .infinity)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .background(Color.red)
                                     }
-                                    .frame(width: 60)
-                                    .frame(maxHeight: .infinity)
-                                    .contentShape(Rectangle())
-                                    .background(Color.red)
                                 }
                             } action: {
                                 withAnimation {
