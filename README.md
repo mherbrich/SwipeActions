@@ -94,7 +94,6 @@ struct YourView: View {
                         .contentShape(Rectangle())
                         .addSwipeAction {
                             Leading { //<= HERE 
-                                
                                 Button {
                                     print("edit \(cell)")
                                 } label: {
@@ -107,25 +106,26 @@ struct YourView: View {
 
                             }
                             Trailing { //<= HERE 
-
-                                Button {
-                                    print("remove \(cell)")
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.white)
+                                HStack(spacing: 0) {
+                                    Button {
+                                        print("remove \(cell)")
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.white)
+                                    }
+                                    .frame(width: 60, height: 50, alignment: .center)
+                                    .contentShape(Rectangle())
+                                    .background(Color.red)
+    
+                                    Button {
+                                        print("Inform \(cell)")
+                                    } label: {
+                                        Image(systemName: "bell.slash.fill")
+                                            .foregroundColor(.white)
+                                    }
+                                    .frame(width: 60, height: 50, alignment: .center)
+                                    .background(Color.blue)
                                 }
-                                .frame(width: 60, height: 50, alignment: .center)
-                                .contentShape(Rectangle())
-                                .background(Color.red)
-
-                                Button {
-                                    print("Inform \(cell)")
-                                } label: {
-                                    Image(systemName: "bell.slash.fill")
-                                        .foregroundColor(.white)
-                                }
-                                .frame(width: 60, height: 50, alignment: .center)
-                                .background(Color.blue)
                             }
                         }
                 }
@@ -160,25 +160,26 @@ struct YourView: View {
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
                         .addSwipeAction(edge: .trailing) { // <== HERE! choose .trailing or .leading
-                            Button {
-                                print("remove \(cell)")
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.white)
+                            HStack(spacing: 0) {
+                                Button {
+                                    print("remove \(cell)")
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 60, height: 50, alignment: .center)
+                                .contentShape(Rectangle())
+                                .background(Color.red)
+                                
+                                Button {
+                                    print("Inform \(cell)")
+                                } label: {
+                                    Image(systemName: "bell.slash.fill")
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 60, height: 50, alignment: .center)
+                                .background(Color.blue)
                             }
-                            .frame(width: 60, height: 50, alignment: .center)
-                            .contentShape(Rectangle())
-                            .background(Color.red)
-                            
-                            Button {
-                                print("Inform \(cell)")
-                            } label: {
-                                Image(systemName: "bell.slash.fill")
-                                    .foregroundColor(.white)
-                            }
-                            .frame(width: 60, height: 50, alignment: .center)
-                            .background(Color.blue)
-                            
                         }
                 }
             }
@@ -248,8 +249,9 @@ struct YourView: View {
                VStack(spacing: 2) {
                    ForEach(range, id: \.self) { cell in
                        Text("Cell \(cell)")
-                           .addFullSwipeAction(menu: .slided,
-                                               swipeColor: .red) { // <=== Color is the same as last button in Trailing for full effect 
+                           .addFullSwipeAction(
+                               menu: .slided,
+                               swipeColor: .red) { // <=== Color is the same as last button in Trailing for full effect 
                                     Leading { 
                                         ...
                                     }
@@ -313,18 +315,20 @@ struct YourView: View {  ]
                                         ...
                                     }
                                     Trailing {
-                                        ...
-                                        
-                                        Button {
-        
-                                        } label: {
-                                            Image(systemName: "trash")
-                                                .foregroundColor(.white)
+                                        HStack(spacing: 0) {
+                                            ...
+                                            
+                                            Button {
+            
+                                            } label: {
+                                                Image(systemName: "trash")
+                                                    .foregroundColor(.white)
+                                            }
+                                            .contentShape(Rectangle())
+                                            .frame(width: 60)
+                                            .frame(maxHeight: .infinity)
+                                            .background(Color.green) // <=== Look here
                                         }
-                                        .contentShape(Rectangle())
-                                        .frame(width: 60)
-                                        .frame(maxHeight: .infinity)
-                                        .background(Color.green) // <=== Look here
                                     }
                                 } action: { // <=== action for full swiping
                                     ...
@@ -384,8 +388,6 @@ ForEach(1 ... 30, id: \.self) { cell in
                Color.green.opacity(0.2)
            }
        )
-
-
        .contentShape(Rectangle())
        .listStyle(.plain)
        .addSwipeAction(menu: .swiped, // <=== SWIPED TYPE
@@ -463,18 +465,20 @@ in ```.addSwipeAction { ... }``` add ```Rectangle``` filled with *same* color as
      .frame(maxWidth: .infinity)
      .background(Color.green.opacity(0.8)) // <=== Look here!
      .addSwipeAction(edge: .trailing) {
-         Rectangle() // <=== HERE!
-             .fill(Color.green.opacity(0.8)) // <=== Don't forget!
-             .frame(width: 8.0, height: 80)
-
-         Button {
-         } label: {
-             Image(systemName: "message")
-                 .foregroundColor(.white)
-         }
-         .frame(width: 60, height: 80)
-         .contentShape(Rectangle())
-         .background(Color.blue)
+        HStack(spacing: 0) {
+             Rectangle() // <=== HERE!
+                 .fill(Color.green.opacity(0.8)) // <=== Don't forget!
+                 .frame(width: 8.0, height: 80)
+    
+             Button {
+             } label: {
+                 Image(systemName: "message")
+                     .foregroundColor(.white)
+             }
+             .frame(width: 60, height: 80)
+             .contentShape(Rectangle())
+             .background(Color.blue)
+        }
      }
 ```
 
