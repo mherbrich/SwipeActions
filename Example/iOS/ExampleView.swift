@@ -16,6 +16,7 @@ struct ExampleView: View {
     
     @State var state: SwipeState = .untouched
     @State private var showingAlert = false
+    @State private var showingAlertSecond = false
     @State private var selectedAction: String = ""
     @State private var fullSwiped = false
     
@@ -277,7 +278,6 @@ struct ExampleView: View {
                 Alert(title: Text(selectedAction), dismissButton: .cancel())
             }
 
-            /*
             Text("non-destructive swipe role ⬇️")
                 .font(.title)
             ScrollView {
@@ -294,9 +294,9 @@ struct ExampleView: View {
                                 print("Cell \(cell) tapped")
                             }
                             .addFullSwipeAction(
-                                id: cell.uuid,
                                 menu: .swiped,
-                                swipeColor: .red,
+                                swipeColor: .gray,
+                                swipeRole: .default,
                                 state: $state
                             ) {
                                 Leading {
@@ -329,112 +329,38 @@ struct ExampleView: View {
                                 }
                                 
                                 Trailing {
-                                    HStack(spacing: 0) {
-                                        Button {
-                                            selectedAction = "cell \(cell) archived!"
-                                            showingAlert = true
-                                        } label: {
-                                            Image(systemName: "archivebox")
-                                                .foregroundColor(.white)
-                                                .frame(width: 60)
-                                                .frame(maxHeight: .infinity)
-                                                .contentShape(Rectangle())
-                                        }
-                                        .background(Color.gray)
-                                        
-                                        Button {
-                                            withAnimation {
-                                                if let index = range2.firstIndex(of: cell) {
-                                                    range2.remove(at: index)
-                                                }
-                                            }
-                                        } label: {
-                                            Image(systemName: "trash")
-                                                .foregroundColor(.white)
-                                                .frame(width: 60)
-                                                .frame(maxHeight: .infinity)
-                                                .contentShape(Rectangle())
-                                        }
-                                        .background(Color.red)
+                                    Button {
+                                        selectedAction = "Cell \(cell) archived!"
+                                        showingAlertSecond = true
+                                    } label: {
+                                        Image(systemName: "archivebox")
+                                            .foregroundColor(.white)
+                                            .frame(width: 60)
+                                            .frame(maxHeight: .infinity)
+                                            .contentShape(Rectangle())
                                     }
-                                    .drawingGroup()
+                                    .background(Color.gray)
                                 }
+                                
                             } action: {
                                 withAnimation {
-                                    if let index = range2.firstIndex(of: cell) {
-                                        range2.remove(at: index)
-                                    }
+                                    selectedAction = "Cell \(cell) archived!"
+                                    showingAlertSecond = true
                                 }
                             }
-                            .drawingGroup(opaque: false)
                     }
                 }
             }
-            .alert(isPresented: $showingAlert) {
-                Alert(title: Text(selectedAction), dismissButton: .cancel())
+            .alert(isPresented: $showingAlertSecond) {
+                Alert(
+                    title: Text(selectedAction),
+                    dismissButton: .default(Text("OK")) {
+                        withAnimation {
+                            state = .swiped(UUID())
+                        }
+                    }
+                )
             }
-            
-            */
-            
-//            ScrollView {
-//                VStack(spacing: 0) {
-//                    ForEach(0...10, id: \.self) { cell in
-//                        Text("Cell \(cell)")
-//                            .frame(height: 60)
-//                            .frame(maxWidth: .infinity)
-//                            .padding()
-//                            .background(Color(UIColor.systemBackground))
-//                            .transition(.asymmetric(insertion: .identity, removal: .move(edge: .leading)))
-//                            .addFullSwipeAction(
-//                                id: cell.uuid,
-//                                menu: .swiped,
-//                                swipeColor: .green,
-//                                swipeRole: .default,
-//                                state: $state
-//                            ) {
-//                                Leading {
-//                                    Button {
-//                                    } label: {
-//                                        Image(systemName: "message")
-//                                            .foregroundColor(.white)
-//                                            .frame(width: 60)
-//                                            .frame(maxHeight: .infinity)
-//                                            .contentShape(Rectangle())
-//                                    }
-//                                    .background(Color.blue)
-//                                }
-//                                Trailing {
-//                                    Button {
-//                                    } label: {
-//                                        Image(systemName: "archivebox")
-//                                            .foregroundColor(.white)
-//                                            .frame(width: 60)
-//                                            .frame(maxHeight: .infinity)
-//                                            .contentShape(Rectangle())
-//                                    }
-//                                    .background(Color.green)
-//                                }
-//                            } action: {
-//                                withAnimation {
-//                                    selectedAction = "Full swiped action!"
-//                                    fullSwiped = true
-//                                }
-//                            }
-//                            .drawingGroup(opaque: true)
-//                    }
-//                }
-//                .alert(isPresented: $fullSwiped) {
-//                    Alert(
-//                        title: Text(selectedAction),
-//                        dismissButton: .default(Text("Archived!")) {
-//                            withAnimation {
-//                                state = .swiped(UUID())
-//                            }
-//                        }
-//                    )
-//                }
-//            }
-
         }
         .tabItem {
             Image(systemName: "arrow.left.square.fill")
