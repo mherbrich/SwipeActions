@@ -521,7 +521,7 @@ Actually if you don't use `.contentShape(Rectangle())`, you can also add `.conte
 </details>
 
 <details>
-  <summary>How to add swpe hint.</summary>
+  <summary>How to add swipe hint.</summary>
 
 Use modifier `.swipeHint`:
 
