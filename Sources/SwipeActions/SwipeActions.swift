@@ -37,8 +37,10 @@ private enum GestureStatus: Equatable {
 
 public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     
-    @Environment(\.identifier) var parentId
-    @Environment(\.layoutDirection) var layoutDirection
+    @Environment(\.identifier) private var parentId
+    @Environment(\.layoutDirection) private var layoutDirection
+    @Environment(\.isFullSwipeHapticsEnabled) private var isHapticsEnabled
+    @Environment(\.fullSwipeHapticFeedback) private var hapticFeedback
     
     @Binding private var state: SwipeState
     @State private var offset: CGFloat = 0
@@ -321,8 +323,12 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
         
         if
             allowsFullSwipe,
-            translationWidth < -(contentWidth * 0.8)
+            translationWidth < -(contentWidth * 0.7)
         {
+            if isHapticsEnabled {
+                HapticsProvider.sendHapticFeedback(hapticFeedback ?? .heavy())
+            }
+            
             withAnimation(.default) {
                 offset = -contentWidth
             }
