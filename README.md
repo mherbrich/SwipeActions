@@ -22,6 +22,21 @@ You can use ```SwipeActions``` in project targeting iOS 13 with any view (e.g. `
 
 - iOS 13.0 or macOS 10.15
 
+## Comparison table
+
+| Features support | This SPM | Others |
+| :---         |     :---:      |          :---:  |
+| SwiftUI   | 🟢     | 🟢     |
+| SPM    | 🟢        | 🟢       |
+| MacOS    | 🟢        | 🔴       |
+| iOS 13.0    | 🟢        | 🔴       |
+| RTL Languages    | 🟢        | 🔴       |
+| FullSwipe Mode   | 🟢        | 🔴       |
+| Flexibility   | 🟢        | 🟡       |
+| Haptics   | 🟢        | 🟡       |
+| Ease of Use    | 🟢        | 🔴       | 
+
+
 ## Installation
 
 #### Swift Package Manager
@@ -138,7 +153,36 @@ struct YourView: View {
 </details>
 
 <details>
-  <summary>Adding swipe actions to one side of view:</summary>
+  <summary>Adding several actions on the side:</summary>
+
+Don't forget that your actions are subviews in general and buttons or smth else particularly. Please arrange its:
+
+```swift
+YourView()
+.addSwipeAction(edge: .trailing) {
+    HStack(spacing: 0) { // <= 👀 Look here 
+        Rectangle()
+            .fill(Color.green.opacity(0.8))
+            .frame(width: 8.0, height: 80)
+        
+        Button {
+        } label: {
+            Image(systemName: "message")
+                .foregroundColor(.white)
+                .frame(width: 60, height: 80)
+                .contentShape(Rectangle())
+        }
+        .background(Color.blue)
+    }
+}
+
+```
+
+</details>
+
+
+<details>
+  <summary>Adding swipe actions to the one side of the view:</summary>
 
 <p align="center">
 <img src="Sources/Gifs/trailing.gif" alt="Example with trailing swipe menu" height="160" width="280">
@@ -159,7 +203,7 @@ struct YourView: View {
                         .frame(height: 50, alignment: .center)
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
-                        .addSwipeAction(edge: .trailing) { // <== HERE! choose .trailing or .leading
+                        .addSwipeAction(edge: .trailing) { // <= choose here .trailing or .leading
                             HStack(spacing: 0) {
                                 Button {
                                     print("remove \(cell)")
@@ -202,14 +246,14 @@ struct YourView: View {
   ```swift
   
 struct YourView: View {  
-     @State var state: SwipeState = .untouched // <=== HERE
+     @State var state: SwipeState = .untouched // <= HERE
 
      var body: some View {
           ScrollView {
                VStack(spacing: 2) {
                    ForEach(1 ... 30, id: \.self) { cell in
                        Text("Cell \(cell)")
-                           .addSwipeAction(state: $state) { // <=== HERE
+                           .addSwipeAction(state: $state) { // <= HERE
                               ....
                            }
                     }
@@ -251,7 +295,7 @@ struct YourView: View {
                        Text("Cell \(cell)")
                            .addFullSwipeAction(
                                menu: .slided,
-                               swipeColor: .red) { // <=== Color is the same as last button in Trailing for full effect 
+                               swipeColor: .red) { // <= Color is the same as last button in Trailing for full effect 
                                     Leading { 
                                         ...
                                     }
@@ -273,7 +317,7 @@ struct YourView: View {
                                         .frame(maxHeight: .infinity)
                                         .background(Color.red) // <=== Look here
                                     }
-                                } action: { // <=== action for full swiping
+                                } action: { // <= action for full swiping
                                     withAnimation {
                                         if let index = range.firstIndex(of: cell) {
                                             range.remove(at: index)
@@ -290,7 +334,7 @@ struct YourView: View {
    
    
   <details>
-  <summary>.defaults</summary>
+  <summary>.default</summary>
   
   This role is used for making some action on cell.
   
@@ -359,7 +403,7 @@ YourView()
                 .font(.system(size: 20.0))
                 .foregroundColor(.white)
                 .frame(width: 68, alignment: .center)
-                .frame(maxHeight: .infinity) // <====== HERE
+                .frame(maxHeight: .infinity) // <= Look here
                 .background(.red)
         }
     }
@@ -380,8 +424,8 @@ ForEach(1 ... 30, id: \.self) { cell in
        .padding()
        .frame(height: 80)
        .frame(maxWidth: .infinity)
-       //.background(Color.green.opacity(0.2)) // <=== DON'T USE SUCH WAY!
-       //.background(Color(red: 0.841, green: 0.956, blue: 0.868)) // <== USE THIS WAY!
+       //.background(Color.green.opacity(0.2)) // <== ❌ DON'T USE SUCH WAY!
+       //.background(Color(red: 0.841, green: 0.956, blue: 0.868)) // <== ✅ USE THIS WAY!
        .background( // <== OR THIS WAY!
            ZStack {
                Color(UIColor.systemBackground) // non-transparent color layer
@@ -417,7 +461,7 @@ Due to some features for working with ```List``` you should:
 ```swift
 List(elements) { e in
     Text(e.name)
-        .frame(width: UIScreen.main.bounds.size.width - 32, height: 80) // <=== HERE
+        .frame(width: UIScreen.main.bounds.size.width - 32, height: 80) // <= HERE
         .background(Color(UIColor.systemBackground))
         .onTapGesture { // <=== HERE
             print("on cell tap!")
@@ -431,7 +475,7 @@ List(elements) { e in
                 Image(systemName: "trash")
                     .foregroundColor(.white)
             }
-            .frame(width: 60, height: 80, alignment: .center) // <=== HERE
+            .frame(width: 60, height: 80, alignment: .center) // <= HERE
             .contentShape(Rectangle())
             .background(Color.red)
         }
@@ -463,11 +507,11 @@ in ```.addSwipeAction { ... }``` add ```Rectangle``` filled with *same* color as
  YourView()
      .frame(height: 80)
      .frame(maxWidth: .infinity)
-     .background(Color.green.opacity(0.8)) // <=== Look here!
+     .background(Color.green.opacity(0.8)) // <= Look here
      .addSwipeAction(edge: .trailing) {
         HStack(spacing: 0) {
              Rectangle() // <=== HERE!
-                 .fill(Color.green.opacity(0.8)) // <=== Don't forget!
+                 .fill(Color.green.opacity(0.8)) // <= 💡 Don't forget!
                  .frame(width: 8.0, height: 80)
     
              Button {
@@ -557,7 +601,7 @@ ForEach(range, ...) {
         .swipeHint(cell == range.first, hintOffset: 120.0) // for trailing <== LOOK HERE
         .swipeHint(cell == range[1], hintOffset: -120.0) // for leading <== LOOK HERE
         .addFullSwipeAction(
-            menu: .swiped, // <== LOOK HERE
+            menu: .swiped, // <== Look here
             swipeColor: .red,
             state: $state) {
                 Leading {
@@ -570,6 +614,61 @@ ForEach(range, ...) {
     ...
 }
 ```
+
+</details>
+
+
+<details>
+    <summary>Multitouching.</summary>
+
+Due to SwiftUI philosophy is not quite possible control multitouching in general and dragging several cells particularly. Anyway we can disable multitouch with special view modifier: `.allowMultitouching(false)` based on UIKit. Add this modifier strictly before using swipe actions:
+
+```swift
+...
+YourView(...)
+      .allowMultitouching(false) // <= Look here
+      .addSwipeAction( ...) {
+        ...
+      }
+...
+```
+By default this flag is true. Using this modifier will repeat telegram's behaviour where you can drag only one cell during multitouching. 
+
+Actually the problem exist only in fullswiping mode. In default mode you can drag several cells but after ending touching only one will be opened.
+
+But as soon as this solution is based on UIKit you can't optimise rendering of `YourView` with `drawingGroup()`:
+```swift
+...
+YourView(...)
+      .allowMultitouching(false) // <= look here
+      .addSwipeAction( ...) {
+        ...
+      }
+      .drawingGroup() // <=  ❌ DON'T DO THAT
+...
+```
+
+You'll definitely get this:
+
+<img width="338" alt="Drawing group after swipeactions" src="https://github.com/user-attachments/assets/b8671c69-a5e1-4ca7-8d62-67b68bd2d33f">
+
+Actually rendering will be optimizing by SwiftUI engine... For full control you can add view modifier `.identifier(your id)` to `YourView(...)`
+</details>
+
+<details>
+    <summary>Optimize rendering.</summary>
+
+To control view's id for optimizing you should use modifier `.identifier(your id)`:
+
+```swift
+ForEach(...) { cell in
+     YourView(cell)
+         .addSwipeAction(...) {}
+         .identifier(cell) // <= Look here
+ }
+```
+
+Actually if you forget to add identifier this don't worry, id will be added manually.
 
 </details>
 
@@ -598,6 +697,56 @@ struct ContentView: View {
         }
         .environment(\.layoutDirection, .rightToLeft) // <= Look here
     }
+}
+```
+
+</details>
+
+### Haptics Supporting 
+
+By default in the full swiping mode action has haptic feedback.
+
+To disable it use `.allowFullSwipeHaptics(false)`
+
+<details>
+<summary>Look for the example</summary>
+
+```swift
+YourView()
+    .addFullSwipeAction(...) { ... }
+    .allowFullSwipeHaptics(false) // <= Look here
+```
+
+</details>
+
+You can easily change this feedback type with `.fullSwipeHapticFeedback(:)`.
+
+<details>
+<summary>Look for the example</summary>
+
+```swift
+YourView()
+    .addFullSwipeAction(...) { ... }
+    .fullSwipeHapticFeedback(.medium()) // <= Look here
+```
+
+</details>
+
+You can easily add haptic to your own buttons in swipe actions.
+
+<details>
+<summary>Look for the example</summary>
+
+```swift
+YourView()
+    .addFullSwipeAction(...) { 
+        ... 
+    Trailing {
+        Button {
+            HapticsProvider.sendHapticFeedback(.heavy()) // <= Look here
+                ...
+            } label: { ... }
+     }
 }
 ```
 
