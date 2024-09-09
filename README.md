@@ -155,7 +155,7 @@ struct YourView: View {
 <details>
   <summary>Adding several actions on the side:</summary>
 
-Don't forget that your actions are subviews in general and buttons or smth else particularly. Please arrange its:
+Don't forget that your actions are subviews in general and buttons or smth else particularly. Please arrange them:
 
 ```swift
 YourView()
