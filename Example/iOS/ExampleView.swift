@@ -133,6 +133,7 @@ struct ExampleView: View {
                             Trailing {
                                 HStack(spacing: 0) {
                                     Button {
+                                        HapticsProvider.sendHapticFeedback(.notification(.warning))
                                         toggles[cell].toggle()
                                     } label: {
                                         HStack {
@@ -270,6 +271,7 @@ struct ExampleView: View {
                                 }
                             }
                             .identifier(cell)
+                            .fullSwipeHapticFeedback(.medium())
                             .animation(.linear, value: range)
                     }
                 }
@@ -351,6 +353,7 @@ struct ExampleView: View {
                     }
                 }
             }
+            .allowFullSwipeHaptics(false)
             .alert(isPresented: $showingAlertSecond) {
                 Alert(
                     title: Text(selectedAction),
