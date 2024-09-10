@@ -621,7 +621,7 @@ ForEach(range, ...) {
 <details>
     <summary>Multitouching.</summary>
 
-Due to SwiftUI philosophy is not quite possible control multitouching in general and dragging several cells particularly. Anyway we can disable multitouch with special view modifier: `.allowMultitouching(false)` based on UIKit. Add this modifier strictly before using swipe actions:
+Due to SwiftUI philosophy is not quite possible to control multitouching in general and dragging several cells particularly. Anyway we can disable multitouch with special view modifier: `.allowMultitouching(false)` based on UIKit. Add this modifier strictly before using swipe actions:
 
 ```swift
 ...
