@@ -43,6 +43,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     @Environment(\.fullSwipeHapticFeedback) private var hapticFeedback
     
     @Binding private var state: SwipeState
+    @Binding private var tapAllowed: Bool
     @State private var offset: CGFloat = 0
     @State private var oldOffset: CGFloat = 0
     @State private var visibleButton: VisibleButton = .none
@@ -68,7 +69,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
     /**
      For lazy views
      ________________________
-     because of measuring size 
+     because of measuring size
      occurred every onAppear
      */
     @State private var maxLeadingOffsetIsCounted: Bool = false
@@ -191,7 +192,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                 contentWidth = $0.width
                 contentHeight = $0.height
             }
-            .gesture (
+            .simultaneousGesture (
                 DragGesture(minimumDistance: 15, coordinateSpace: .global)
                     .updating($isDragging) { _, isDragging, _ in
                         isDragging = true
@@ -205,6 +206,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
             }
             .valueChanged(of: isDragging) { value in
                 DispatchQueue.main.async {
+                    tapAllowed = !isDragging
                     if value, gestureState != .started {
                         gestureState = .started
                     } else if !value, gestureState != .ended {
@@ -364,7 +366,7 @@ public struct SwipeAction<V1: View, V2: View>: ViewModifier {
                     .zIndex(2)
             }
             .compositingGroup()
-        case .swiped:        
+        case .swiped:
             ZStack {
                 swipedMenu
                     .frame(height: isDeletedRow ? 0 : nil)
@@ -387,6 +389,7 @@ public extension SwipeAction {
         fullSwipeRole: SwipeRole = .default,
         swipeColor: Color? = nil,
         state: Binding<SwipeState>,
+        tapAllowed: Binding<Bool>,
         @ViewBuilder _ content: @escaping () -> TupleView<(Leading<V1>, Trailing<V2>)>,
         action: (() -> Void)? = nil
     ) {
@@ -395,6 +398,7 @@ public extension SwipeAction {
         self.fullSwipeRole = fullSwipeRole
         self.swipeColor = swipeColor
         _state = state
+        _tapAllowed = tapAllowed
         leadingSwipeView = content().value.0
         trailingSwipeView = content().value.1
         self.action = action
@@ -406,6 +410,7 @@ public extension SwipeAction {
         fullSwipeRole: SwipeRole = .default,
         swipeColor: Color? = nil,
         state: Binding<SwipeState>,
+        tapAllowed: Binding<Bool>,
         @ViewBuilder leading: @escaping () -> V1,
         action: (() -> Void)? = nil
     ) {
@@ -414,6 +419,7 @@ public extension SwipeAction {
         self.fullSwipeRole = fullSwipeRole
         self.swipeColor = swipeColor
         _state = state
+        _tapAllowed = tapAllowed
         leadingSwipeView = Group { leading() }
         trailingSwipeView = nil
         self.action = action
@@ -425,6 +431,7 @@ public extension SwipeAction {
         fullSwipeRole: SwipeRole = .default,
         swipeColor: Color? = nil,
         state: Binding<SwipeState>,
+        tapAllowed: Binding<Bool>,
         @ViewBuilder trailing: @escaping () -> V2,
         action: (() -> Void)? = nil
     ) {
@@ -433,6 +440,7 @@ public extension SwipeAction {
         self.fullSwipeRole = fullSwipeRole
         self.swipeColor = swipeColor
         _state = state
+        _tapAllowed = tapAllowed
         trailingSwipeView = Group { trailing() }
         leadingSwipeView = nil
         self.action = action
